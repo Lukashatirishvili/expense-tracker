@@ -1,0 +1,48 @@
+@ExpenseTracker_Api_HostAddress = http://localhost:5017
+
+### Get All Transactions
+GET {{ExpenseTracker_Api_HostAddress}}//api/Transactions
+Accept: application/json
+
+### Get Transaction By Id
+GET {{ExpenseTracker_Api_HostAddress}}//api/Transactions/1
+
+### Create new Expense transaction
+POST {{ExpenseTracker_Api_HostAddress}}/api/Transactions
+Content-Type: application/json
+
+{
+  "description": "Coffee",
+  "amount": 4.50,
+  "type": "Expense",
+  "category": "Food",
+  "date": "2026-06-06"
+}
+
+### Create new income transaction
+POST {{ExpenseTracker_Api_HostAddress}}/api/transactions
+Content-Type: application/json
+
+{
+  "description": "Freelance payment",
+  "amount": 300,
+  "type": "Income",
+  "category": "Work",
+  "date": "2026-06-06"
+}
+
+### Update Transaction
+PUT {{ExpenseTracker_Api_HostAddress}}/api/Transactions/1
+Content-Type: application/json
+
+{
+  "description": "Monthly Salary",
+  "amount": 2600,
+  "type": "Income",
+  "category": "Job",
+  "date": "2026-06-06"
+}
+
+### Delete Transaction
+DELETE {{ExpenseTracker_Api_HostAddress}}/api/Transactions/2
+Accept: application/json
