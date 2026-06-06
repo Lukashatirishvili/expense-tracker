@@ -46,3 +46,49 @@ Content-Type: application/json
 ### Delete Transaction
 DELETE {{ExpenseTracker_Api_HostAddress}}/api/Transactions/2
 Accept: application/json
+
+/////////////////////// Categories //////////////////
+
+### Get all categories
+GET {{ExpenseTracker_Api_HostAddress}}/api/Categories
+Accept: application/json
+
+### Get category by id
+GET {{ExpenseTracker_Api_HostAddress}}/api/Categories/1
+Accept: application/json
+
+### Create food category
+POST {{ExpenseTracker_Api_HostAddress}}/api/Categories
+Content-Type: application/json
+
+{
+  "Name": "Food"
+}
+
+### Create salary category
+POST {{ExpenseTracker_Api_HostAddress}}/api/Categories
+Content-Type: application/json
+
+{
+  "Name": "Salary"
+}
+
+### Create transport category
+POST {{ExpenseTracker_Api_HostAddress}}/api/Categories
+Content-Type: application/json
+
+{
+  "Name": "Transport"
+}
+
+### Update category
+PUT {{ExpenseTracker_Api_HostAddress}}/api/Categories/1
+Content-Type: application/json
+
+{
+  "Name": "Groceries"
+}
+
+### Delete category
+DELETE {{ExpenseTracker_Api_HostAddress}}/api/Categories/2
+Accept: application/json

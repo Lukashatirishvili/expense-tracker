@@ -6,6 +6,7 @@ public class Transaction
     public string Description { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public string Type { get; set; } = "Expense";
-    public string Category { get; set; } = string.Empty;
+    public int CategoryId { get; set; }
+    public Category? Category { get; set; }
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
 }
