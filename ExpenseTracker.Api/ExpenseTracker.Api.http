@@ -90,7 +90,7 @@ POST {{ExpenseTracker_Api_HostAddress}}/api/Categories
 Content-Type: application/json
 
 {
-  "Name": "Food"
+  "Name": "Gambling"
 }
 
 ### Create salary category
@@ -110,13 +110,13 @@ Content-Type: application/json
 }
 
 ### Update category
-PUT {{ExpenseTracker_Api_HostAddress}}/api/Categories/1
+PUT {{ExpenseTracker_Api_HostAddress}}/api/Categories/2002
 Content-Type: application/json
 
 {
-  "Name": "Groceries"
+  "Name": "TT"
 }
 
 ### Delete category
-DELETE {{ExpenseTracker_Api_HostAddress}}/api/Categories/2
+DELETE {{ExpenseTracker_Api_HostAddress}}/api/Categories/1002
 Accept: application/json

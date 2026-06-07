@@ -1,4 +1,5 @@
 using ExpenseTracker.Api.Data;
+using ExpenseTracker.Api.DTOs;
 using ExpenseTracker.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,17 +18,36 @@ public class CategoriesController : Controller
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Category>>> GetAll()
+    public async Task<ActionResult<IEnumerable<CategoryResponseDto>>> GetAll()
     {
-        var categories = await _context.Categories.OrderBy(c => c.Id).ToListAsync();
+        var categories = await _context.Categories
+            .OrderBy(c => c.Name)    
+            .Select(t => new CategoryResponseDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+                TransactionCount = t.Transactions.Count
+                
+            })
+            .ToListAsync();
         
         return Ok(categories);
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Category>> GetById(int id)
+    public async Task<ActionResult<CategoryResponseDto>> GetById(int id)
     {
-        var category = await _context.Categories.FindAsync(id);
+        var category = await _context.Categories
+            .Where(c => c.Id == id)
+            .Select(c => new CategoryResponseDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                TransactionCount = c.Transactions.Count
+                
+            })
+            .FirstOrDefaultAsync();
+          
 
         if (category == null)
         {
@@ -38,29 +58,43 @@ public class CategoriesController : Controller
     }
 
     [HttpPost]
-    public async Task<ActionResult<Category>> Create(Category category)
+    public async Task<ActionResult<CategoryResponseDto>> Create(CreateCategoryDto request)
     {
-        if (string.IsNullOrWhiteSpace(category.Name))
+        if (string.IsNullOrWhiteSpace(request.Name))
         {
             return BadRequest("Category name is required");
         }
 
+        var normalizedName = request.Name.Trim();
+
         var categoryExists = await _context.Categories.
-            AnyAsync(c => c.Name.ToLower() == category.Name.ToLower());
+            AnyAsync(c => c.Name.ToLower() == normalizedName.ToLower());
 
         if (categoryExists)
         {
             return BadRequest("Category with that name already exists");
         }
+
+        var category = new Category
+        {
+            Name = request.Name
+        };
         
         _context.Categories.Add(category);
         await _context.SaveChangesAsync();
+
+        var response = new CategoryResponseDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            TransactionCount = 0
+        };
         
-        return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
+        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> Update(int id, Category updatedCategory)
+    public async Task<ActionResult> Update(int id, UpdateCategoryDto request)
     {
         var category = await _context.Categories.FindAsync(id);
 
@@ -69,20 +103,22 @@ public class CategoriesController : Controller
             return NotFound();
         }
 
-        if (string.IsNullOrWhiteSpace(updatedCategory.Name))
+        if (string.IsNullOrWhiteSpace(request.Name))
         {
             return BadRequest("Category name is required");
         }
         
+        var normalizedName = request.Name.Trim();
+        
         var categoryExists = await _context.Categories.
-            AnyAsync(c => c.Id != id && c.Name.ToLower() == updatedCategory.Name.ToLower());
+            AnyAsync(c => c.Id != id && c.Name.ToLower() == normalizedName.ToLower());
 
         if (categoryExists)
         {
             return BadRequest("Category Already exists");
         }
         
-        category.Name = updatedCategory.Name;
+        category.Name = request.Name;
         
         await _context.SaveChangesAsync();
         return NoContent();
@@ -107,6 +143,7 @@ public class CategoriesController : Controller
         
         _context.Categories.Remove(category);
         await _context.SaveChangesAsync();
+        
         return NoContent();
     }
 }
