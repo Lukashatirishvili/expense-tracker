@@ -15,7 +15,7 @@ Content-Type: application/json
   "description": "Coffee",
   "amount": 4.50,
   "type": "Expense",
-  "category": "Food",
+  "categoryId": 2,
   "date": "2026-06-06"
 }
 
@@ -27,7 +27,7 @@ Content-Type: application/json
   "description": "Freelance payment",
   "amount": 300,
   "type": "Income",
-  "category": "Work",
+  "categoryId": 1002,
   "date": "2026-06-06"
 }
 
@@ -39,7 +39,7 @@ Content-Type: application/json
   "description": "Monthly Salary",
   "amount": 2600,
   "type": "Income",
-  "category": "Job",
+  "categoryId": 1,
   "date": "2026-06-06"
 }
 
@@ -78,7 +78,7 @@ POST {{ExpenseTracker_Api_HostAddress}}/api/Categories
 Content-Type: application/json
 
 {
-  "Name": "Transport"
+  "Name": "Gaming"
 }
 
 ### Update category
