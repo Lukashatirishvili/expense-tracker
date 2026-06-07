@@ -1,5 +1,9 @@
 @ExpenseTracker_Api_HostAddress = http://localhost:5017
 
+### Get monthly summary
+GET {{ExpenseTracker_Api_HostAddress}}/api/reports/monthly-summary?year=2026&month=6
+Accept: application/json
+
 ### Get All Transactions
 GET {{ExpenseTracker_Api_HostAddress}}//api/Transactions
 Accept: application/json
@@ -36,10 +40,10 @@ POST {{ExpenseTracker_Api_HostAddress}}/api/Transactions
 Content-Type: application/json
 
 {
-  "description": "Coffee",
-  "amount": 4.50,
+  "description": "Bus Ticket",
+  "amount": 23,
   "type": "Expense",
-  "categoryId": 2,
+  "categoryId": 3,
   "date": "2026-06-06"
 }
 
