@@ -20,11 +20,16 @@ public class TransactionsController : Controller
     }
     
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TransactionResponseDto>>> GetAll(
+    public async Task<ActionResult<PagedResponseDto<TransactionResponseDto>>> GetAll(
         string? type,
         int? categoryId,
         DateOnly? fromDate,
-        DateOnly? toDate)
+        DateOnly? toDate,
+        int pageNumber = 1,
+        int pageSize = 10,
+        string sortBy = "date",
+        string sortDirection = "desc"
+        )
     {
 
         if (!string.IsNullOrWhiteSpace(type) && !IsValidTransactionType(type))
@@ -35,6 +40,23 @@ public class TransactionsController : Controller
         if (fromDate.HasValue && toDate.HasValue && fromDate > toDate)
         {
             return BadRequest("From date must be greater than To date");
+        }
+
+        if (pageNumber < 1)
+        {
+            return BadRequest("Page number must be greater than 0");
+        }
+
+        if (pageSize < 1 || pageSize > 100)
+        {   
+            return BadRequest("Page size must be between 1 and 100");
+        }
+
+        var normalizedSortDirection = sortDirection.ToLower();
+
+        if (normalizedSortDirection != "asc" && normalizedSortDirection != "desc")
+        {
+            return BadRequest("Sort direction must be either asc or desc");
         }
 
         var query = _context.Transactions.AsQueryable();
@@ -59,9 +81,35 @@ public class TransactionsController : Controller
         {
             query = query.Where(t => t.Date <= toDate.Value);
         }
+
+        query = sortBy.ToLower() switch
+        {
+            "amount" => normalizedSortDirection == "asc"
+                ? query.OrderBy(t => t.Amount)
+                : query.OrderByDescending(t => t.Amount),
+
+            "description" => normalizedSortDirection == "asc"
+                ? query.OrderBy(t => t.Description)
+                : query.OrderByDescending((t => t.Description)),
+
+            "type" => normalizedSortDirection == "asc"
+                ? query.OrderBy(t => t.Type)
+                : query.OrderByDescending(t => t.Type),
+
+            "date" => normalizedSortDirection == "asc"
+                ? query.OrderBy(t => t.Date)
+                : query.OrderByDescending(t => t.Date),
+
+            _ => normalizedSortDirection == "asc"
+                ? query.OrderBy(t => t.Date)
+                : query.OrderByDescending(t => t.Date)
+        };
+        
+        var totalCount = await query.CountAsync();
         
         var transactions = await query
-            .OrderByDescending(t => t.Date)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .Select(t => new TransactionResponseDto
         {
             Id = t.Id,
@@ -72,8 +120,18 @@ public class TransactionsController : Controller
             CategoryId = t.CategoryId,
             CategoryName = t.Category != null ? t.Category.Name : string.Empty
         }).ToListAsync();
+
+
+        var response = new PagedResponseDto<TransactionResponseDto>
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+            Data = transactions
+        };
         
-        return Ok(transactions);
+        return Ok(response);
     }
 
     

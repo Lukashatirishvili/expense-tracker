@@ -4,6 +4,30 @@
 GET {{ExpenseTracker_Api_HostAddress}}/api/reports/monthly-summary?year=2026&month=6
 Accept: application/json
 
+### Get transactions with pagination
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?pageNumber=1&pageSize=5
+Accept: application/json
+
+
+### Get second page
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?pageNumber=2&pageSize=5
+Accept: application/json
+
+
+### Sort by amount ascending
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?sortBy=amount&sortDirection=asc
+Accept: application/json
+
+
+### Sort by amount descending
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?sortBy=amount&sortDirection=desc
+Accept: application/json
+
+
+### Filter, sort, and paginate together
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?type=Expense&categoryId=1&sortBy=amount&sortDirection=desc&pageNumber=1&pageSize=10
+Accept: application/json
+
 ### Get All Transactions
 GET {{ExpenseTracker_Api_HostAddress}}//api/Transactions
 Accept: application/json
