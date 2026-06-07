@@ -4,6 +4,30 @@
 GET {{ExpenseTracker_Api_HostAddress}}//api/Transactions
 Accept: application/json
 
+### Filter by expense
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?type=Expense
+Accept: application/json
+
+
+### Filter by income
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?type=Income
+Accept: application/json
+
+
+### Filter by category
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?categoryId=1
+Accept: application/json
+
+
+### Filter by date range
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?fromDate=2026-06-01&toDate=2026-06-30
+Accept: application/json
+
+
+### Filter by type and category
+GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?type=Expense&categoryId=2
+Accept: application/json
+
 ### Get Transaction By Id
 GET {{ExpenseTracker_Api_HostAddress}}//api/Transactions/1
 

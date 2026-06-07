@@ -20,10 +20,49 @@ public class TransactionsController : Controller
     }
     
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TransactionResponseDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<TransactionResponseDto>>> GetAll(
+        string? type,
+        int? categoryId,
+        DateOnly? fromDate,
+        DateOnly? toDate)
     {
 
-        var transactions = await _context.Transactions.Select(t => new TransactionResponseDto
+        if (!string.IsNullOrWhiteSpace(type) && !IsValidTransactionType(type))
+        {
+            return BadRequest("Type must be either Income or Expense");
+        }
+
+        if (fromDate.HasValue && toDate.HasValue && fromDate > toDate)
+        {
+            return BadRequest("From date must be greater than To date");
+        }
+
+        var query = _context.Transactions.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            var normalizedType = NormalizeTransactionType(type);
+            query = query.Where(t => t.Type == normalizedType); 
+        }
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(t => t.CategoryId == categoryId.Value);
+        }
+
+        if (fromDate.HasValue)
+        {
+            query = query.Where(t => t.Date >= fromDate.Value);
+        }
+
+        if (toDate.HasValue)
+        {
+            query = query.Where(t => t.Date <= toDate.Value);
+        }
+        
+        var transactions = await query
+            .OrderByDescending(t => t.Date)
+            .Select(t => new TransactionResponseDto
         {
             Id = t.Id,
             Description = t.Description,
