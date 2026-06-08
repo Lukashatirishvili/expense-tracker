@@ -114,7 +114,7 @@ POST {{ExpenseTracker_Api_HostAddress}}/api/Categories
 Content-Type: application/json
 
 {
-  "Name": "Gambling"
+  "Name": "Game"
 }
 
 ### Create salary category
