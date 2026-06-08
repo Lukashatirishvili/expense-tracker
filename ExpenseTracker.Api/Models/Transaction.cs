@@ -10,3 +10,4 @@ public class Transaction
     public Category? Category { get; set; }
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
 }
+

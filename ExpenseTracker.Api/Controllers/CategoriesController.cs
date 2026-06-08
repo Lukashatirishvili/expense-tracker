@@ -70,11 +70,6 @@ public class CategoriesController : Controller
         var categoryExists = await _context.Categories.
             AnyAsync(c => c.Name.ToLower() == normalizedName.ToLower());
 
-        if (categoryExists)
-        {
-            return BadRequest("Category with that name already exists");
-        }
-
         var category = new Category
         {
             Name = request.Name
@@ -101,11 +96,6 @@ public class CategoriesController : Controller
         if (category == null)
         {
             return NotFound();
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            return BadRequest("Category name is required");
         }
         
         var normalizedName = request.Name.Trim();

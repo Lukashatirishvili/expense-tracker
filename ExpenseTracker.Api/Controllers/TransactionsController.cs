@@ -161,22 +161,6 @@ public class TransactionsController : Controller
     [HttpPost]
     public async Task<ActionResult<CreateTransactionDto>> Create(CreateTransactionDto request)
     {
-
-        if (string.IsNullOrEmpty(request.Description))
-        {
-            return BadRequest("Description is required");
-        }
-        
-        if (request.Amount <= 0)
-        {
-            return BadRequest("Amount must be greater than zero.");
-        }
-
-        if (!IsValidTransactionType(request.Type))
-        {
-            return BadRequest("Type must be either Income or Expense");
-        }
-        
         var categoryExists = await _context.Categories
             .AnyAsync(c => c.Id == request.CategoryId);
 
@@ -222,21 +206,6 @@ public class TransactionsController : Controller
         if (transaction == null)
         {
             return NotFound();
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Description))
-        {
-            return BadRequest("Description is required");
-        }
-
-        if (request.Amount <= 0)
-        {
-            return BadRequest("Amount must be greater than zero.");
-        }
-
-        if (!IsValidTransactionType(request.Type))
-        {
-            return BadRequest("Type must be either Income or Expense");
         }
         
         var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
