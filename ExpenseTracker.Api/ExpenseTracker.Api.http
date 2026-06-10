@@ -57,7 +57,7 @@ GET {{ExpenseTracker_Api_HostAddress}}/api/transactions?type=Expense&categoryId=
 Accept: application/json
 
 ### Get Transaction By Id
-GET {{ExpenseTracker_Api_HostAddress}}//api/Transactions/1
+GET {{ExpenseTracker_Api_HostAddress}}//api/Transactions
 
 ### Create new Expense transaction
 POST {{ExpenseTracker_Api_HostAddress}}/api/Transactions

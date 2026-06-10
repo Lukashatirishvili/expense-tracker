@@ -1,6 +1,7 @@
 using ExpenseTracker.Api.Data;
 using ExpenseTracker.Api.DTOs;
 using ExpenseTracker.Api.Models;
+using ExpenseTracker.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,26 +11,17 @@ namespace ExpenseTracker.Api.Controllers;
 [Route("api/[controller]")]
 public class CategoriesController : Controller
 {
-    private readonly AppDbContext _context;
+    private readonly ICategoryService _categoryService;
 
-    public CategoriesController(AppDbContext context)
+    public CategoriesController(ICategoryService categoryService)
     {
-        _context = context;
+        _categoryService = categoryService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CategoryResponseDto>>> GetAll()
     {
-        var categories = await _context.Categories
-            .OrderBy(c => c.Name)    
-            .Select(t => new CategoryResponseDto
-            {
-                Id = t.Id,
-                Name = t.Name,
-                TransactionCount = t.Transactions.Count
-                
-            })
-            .ToListAsync();
+        var categories = await _categoryService.GetAllAsync();
         
         return Ok(categories);
     }
@@ -37,17 +29,8 @@ public class CategoriesController : Controller
     [HttpGet("{id:int}")]
     public async Task<ActionResult<CategoryResponseDto>> GetById(int id)
     {
-        var category = await _context.Categories
-            .Where(c => c.Id == id)
-            .Select(c => new CategoryResponseDto
-            {
-                Id = c.Id,
-                Name = c.Name,
-                TransactionCount = c.Transactions.Count
-                
-            })
-            .FirstOrDefaultAsync();
-          
+        
+        var category = await _categoryService.GetByIdAsync(id);  
 
         if (category == null)
         {
@@ -60,80 +43,49 @@ public class CategoriesController : Controller
     [HttpPost]
     public async Task<ActionResult<CategoryResponseDto>> Create(CreateCategoryDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
+        var result = await _categoryService.CreateAsync(request);
+
+        if (!result.Success)
         {
-            return BadRequest("Category name is required");
+            return HandleServiceError(result);
         }
-
-        var normalizedName = request.Name.Trim();
-
-        var categoryExists = await _context.Categories.
-            AnyAsync(c => c.Name.ToLower() == normalizedName.ToLower());
-
-        var category = new Category
-        {
-            Name = request.Name
-        };
         
-        _context.Categories.Add(category);
-        await _context.SaveChangesAsync();
-
-        var response = new CategoryResponseDto
-        {
-            Id = category.Id,
-            Name = category.Name,
-            TransactionCount = 0
-        };
-        
-        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result);
     }
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult> Update(int id, UpdateCategoryDto request)
     {
-        var category = await _context.Categories.FindAsync(id);
+        var result = await _categoryService.UpdateAsync(id, request);
 
-        if (category == null)
+        if (!result.Success)
         {
-            return NotFound();
+            return HandleServiceError(result);
         }
         
-        var normalizedName = request.Name.Trim();
-        
-        var categoryExists = await _context.Categories.
-            AnyAsync(c => c.Id != id && c.Name.ToLower() == normalizedName.ToLower());
-
-        if (categoryExists)
-        {
-            return BadRequest("Category Already exists");
-        }
-        
-        category.Name = request.Name;
-        
-        await _context.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var category = await _context.Categories.FindAsync(id);
+        var result = await _categoryService.DeleteAsync(id);
 
-        if (category is null)
+        if (!result.Success)
         {
-            return NotFound();
+            return HandleServiceError(result);
         }
-        
-        var hasTransactions = await _context.Transactions.AnyAsync(t => t.CategoryId == id);
-
-        if (hasTransactions)
-        {
-            return BadRequest("Cannot delete category because it has transactions");
-        }
-        
-        _context.Categories.Remove(category);
-        await _context.SaveChangesAsync();
         
         return NoContent();
+    }
+    
+    private ActionResult HandleServiceError<T>(ServiceResult<T> result)
+    {
+        return result.ErrorType switch
+        {
+            ServiceErrorType.BadRequest => BadRequest(result.ErrorMessage),
+            ServiceErrorType.NotFound => NotFound(result.ErrorMessage),
+            _ => BadRequest(result.ErrorMessage)
+        };
     }
 }
