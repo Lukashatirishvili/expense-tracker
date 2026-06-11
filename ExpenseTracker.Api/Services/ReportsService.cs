@@ -7,14 +7,18 @@ namespace ExpenseTracker.Api.Services;
 public class ReportsService : IReportService
 {
     private readonly AppDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public ReportsService(AppDbContext context)
+    public ReportsService(AppDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<ServiceResult<MonthlySummaryDto>> GetMonthlySummaryAsync(int year, int month)
     {
+        
+        
         if (year < 2000 || year > 2100)
         {
             return ServiceResult<MonthlySummaryDto>.BadRequest("Year must be between 2000 and 2100.");
@@ -25,11 +29,13 @@ public class ReportsService : IReportService
             return ServiceResult<MonthlySummaryDto>.BadRequest("Month must be between 1 and 12.");
         }
         
+        var userId = _currentUserService.UserId;
+        
         var startDate = new DateOnly(year, month, 1);
         var endDate = startDate.AddMonths(1);
 
         var monthlyTransactions = _context.Transactions
-            .Where(t => t.Date >= startDate && t.Date < endDate);
+            .Where(t => t.Date >= startDate && t.Date < endDate && t.UserId == userId);
 
         var totalIncome = await monthlyTransactions.
             Where(t => t.Type == "Income")

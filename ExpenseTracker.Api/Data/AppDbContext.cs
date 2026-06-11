@@ -23,9 +23,17 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(c => c.Name)
                 .IsRequired()
                 .HasMaxLength(100);
+            
+            entity.Property(c => c.UserId)
+                .IsRequired();
 
-            entity.HasIndex(c => c.Name)
+            entity.HasIndex(c => new { c.UserId, c.Name })
                 .IsUnique();
+            
+            entity.HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Transaction>(entity =>
@@ -43,10 +51,18 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
             entity.Property(t => t.Date)
                 .HasColumnType("date");
+            
+            entity.Property(t => t.UserId)
+                .IsRequired();
 
             entity.HasOne(t => t.Category)
                 .WithMany(t => t.Transactions)
                 .HasForeignKey(t => t.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
         });

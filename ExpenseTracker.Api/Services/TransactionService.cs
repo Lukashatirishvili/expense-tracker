@@ -8,16 +8,29 @@ namespace ExpenseTracker.Api.Services;
 public class TransactionService : ITransactionService
 {
     private readonly AppDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public TransactionService(AppDbContext context)
+    public TransactionService(AppDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
     
-    public async Task<PagedResponseDto<TransactionResponseDto>> GetAllAsync(string? type, int? categoryId, DateOnly? fromDate, DateOnly? toDate, int pageNumber, int pageSize,
-        string sortBy, string sortDirection)
+    public async Task<PagedResponseDto<TransactionResponseDto>> GetAllAsync(
+        string? type, 
+        int? categoryId, 
+        DateOnly? fromDate, 
+        DateOnly? toDate, 
+        int pageNumber, 
+        int pageSize,
+        string sortBy, 
+        string sortDirection)
     {
-        var query = _context.Transactions.AsQueryable();
+        
+        var userId = _currentUserService.UserId;
+
+        var query = _context.Transactions
+            .Where(t => t.UserId == userId);
 
         if (!string.IsNullOrWhiteSpace(type))
         {
@@ -100,8 +113,11 @@ public class TransactionService : ITransactionService
 
     public async Task<TransactionResponseDto?> GetByIdAsync(int id)
     {
+        
+        var userId = _currentUserService.UserId;
+        
         return await _context.Transactions
-            .Where(t => t.Id == id)
+            .Where(t => t.Id == id && t.UserId == userId)
             .Select(t => new TransactionResponseDto
             {
                 Id = t.Id,
@@ -117,7 +133,10 @@ public class TransactionService : ITransactionService
 
     public async Task<ServiceResult<TransactionResponseDto>> CreateAsync(CreateTransactionDto request)
     {
-        var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
+        var userId = _currentUserService.UserId;
+        
+        var categoryExists = await _context.Categories.
+            AnyAsync(c => c.Id == request.CategoryId && c.UserId == userId);
 
         if (!categoryExists)
         {
@@ -131,6 +150,7 @@ public class TransactionService : ITransactionService
             Type = request.Type,
             Date = request.Date,
             CategoryId = request.CategoryId,
+            UserId = userId
         };
         
         _context.Transactions.Add(transaction);
@@ -143,14 +163,18 @@ public class TransactionService : ITransactionService
 
     public async Task<ServiceResult<bool>> UpdateAsync(int id, UpdateTransactionDto request)
     {
-        var transaction = await _context.Transactions.FindAsync(id);
+        var userId = _currentUserService.UserId;
+        
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
         if (transaction == null)
         {
             return ServiceResult<bool>.BadRequest("Transaction Does not Exists");
         }
         
-        var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
+        var categoryExists = await _context.Categories.
+            AnyAsync(c => c.Id == request.CategoryId && c.UserId == userId);
 
         if (!categoryExists)
         {
@@ -171,7 +195,10 @@ public class TransactionService : ITransactionService
     public async Task<ServiceResult<bool>> DeleteAsync(int id)
     {
         
-        var transaction = await _context.Transactions.FindAsync(id);
+        var userId = _currentUserService.UserId;
+        
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
         if (transaction == null)
         {

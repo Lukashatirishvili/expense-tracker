@@ -8,30 +8,37 @@ namespace ExpenseTracker.Api.Services;
 public class CategoryService : ICategoryService
 {
     private readonly AppDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public CategoryService(AppDbContext context)
+    public CategoryService(AppDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
     
     public async Task<IEnumerable<CategoryResponseDto>> GetAllAsync()
     {
+        var userId = _currentUserService.UserId;
+        
         return await _context.Categories
-            .OrderBy(c => c.Name)    
-            .Select(t => new CategoryResponseDto
+            .Where(c => c.UserId == userId)
+            .OrderBy(c => c.Name)
+            .Select(c => new CategoryResponseDto
             {
-                Id = t.Id,
-                Name = t.Name,
-                TransactionCount = t.Transactions.Count
-                
+                Id = c.Id,
+                Name = c.Name,
+                TransactionCount = c.Transactions.Count
             })
             .ToListAsync();
     }
 
     public async Task<CategoryResponseDto?> GetByIdAsync(int id)
     {
+        
+        var userId = _currentUserService.UserId;
+        
          return await _context.Categories
-            .Where(c => c.Id == id)
+            .Where(c => c.UserId == userId)
             .Select(c => new CategoryResponseDto
             {
                 Id = c.Id,
@@ -45,6 +52,8 @@ public class CategoryService : ICategoryService
 
     public async Task<ServiceResult<CategoryResponseDto>> CreateAsync(CreateCategoryDto request)
     {
+        
+        var userId = _currentUserService.UserId;
         var normalizedName = request.Name.Trim();
 
         if (string.IsNullOrEmpty(normalizedName))
@@ -52,7 +61,8 @@ public class CategoryService : ICategoryService
             return ServiceResult<CategoryResponseDto>.BadRequest("Category name is required");
         }
         
-        var categoryExists = await _context.Categories.AnyAsync(c => c.Name == normalizedName);
+        var categoryExists = await _context.Categories.
+            AnyAsync(c => c.UserId == userId && c.Name.ToLower() == normalizedName.ToLower());
 
         if (categoryExists)
         {
@@ -61,7 +71,8 @@ public class CategoryService : ICategoryService
 
         var category = new Category
         {
-            Name = normalizedName
+            Name = normalizedName,
+            UserId = userId
         };
         
         _context.Categories.Add(category);
@@ -79,11 +90,14 @@ public class CategoryService : ICategoryService
 
     public async Task<ServiceResult<bool>> UpdateAsync(int id, UpdateCategoryDto request)
     {
-        var category = await _context.Categories.FindAsync(id);
+        
+        var userId = _currentUserService.UserId;
+        
+        var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
 
         if (category == null)
         {
-            return ServiceResult<bool>.NotFound("Category with that id does not exist");
+            return ServiceResult<bool>.NotFound("Category not found");
         }
         
         var normalizedName = request.Name.Trim();
@@ -93,16 +107,16 @@ public class CategoryService : ICategoryService
             return ServiceResult<bool>.BadRequest("Category name is required");
         }
         
-        var categoryExists = await _context.Categories.AnyAsync(c => c.Name == normalizedName);
+        var categoryExists = await _context.Categories.
+            AnyAsync(c => c.Name == normalizedName && c.UserId == userId && c.Id != id);
 
         if (categoryExists)
         {
             return ServiceResult<bool>.BadRequest("Category with that name already exists");
         }
 
-        category.Name = normalizedName;
+        category.Name = normalizedName; 
         
-        _context.Categories.Update(category);
         await _context.SaveChangesAsync();
 
         return ServiceResult<bool>.Ok(true);
@@ -110,14 +124,17 @@ public class CategoryService : ICategoryService
 
     public async Task<ServiceResult<bool>> DeleteAsync(int id)
     {
-        var category = await _context.Categories.FindAsync(id);
+        var userId = _currentUserService.UserId;
+        
+        var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
 
         if (category == null)
         {
             return ServiceResult<bool>.BadRequest("Category name is required");
         }
         
-        var hasTransaction = await _context.Transactions.AnyAsync(t => t.CategoryId == id);
+        var hasTransaction = await _context.Transactions.
+            AnyAsync(t => t.CategoryId == id && t.UserId == userId);
 
         if (hasTransaction)
         {

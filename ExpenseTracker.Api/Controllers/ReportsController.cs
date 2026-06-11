@@ -1,11 +1,13 @@
 using ExpenseTracker.Api.Data;
 using ExpenseTracker.Api.DTOs;
 using ExpenseTracker.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ReportsController : Controller

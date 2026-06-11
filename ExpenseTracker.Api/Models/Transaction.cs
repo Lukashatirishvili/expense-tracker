@@ -9,5 +9,8 @@ public class Transaction
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+    
+    public string UserId { get; set; } = string.Empty;
+    public ApplicationUser? User { get; set; }
 }
 
